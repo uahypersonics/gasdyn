@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61.0", "setuptools-scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "gasdyn"
-version = "0.0.1"
+dynamic = ["version"]
 description = "Compressible inviscid flow calculator: shocks, expansions, isentropic relations"
 readme = "README.md"
 license = {text = "BSD-3-Clause"}
@@ -34,6 +34,8 @@ Repository = "https://github.com/uahypersonics/gasdyn"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools_scm]
 
 [tool.ruff]
 line-length = 100
