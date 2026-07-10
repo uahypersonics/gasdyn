@@ -216,6 +216,7 @@ __marimo__/
 
 *DS_Store*
 
-legacy
+legacy/
+sandbox/
 
-TASKS.md
+python-style.md
