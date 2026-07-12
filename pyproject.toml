@@ -26,11 +26,22 @@ keywords = ["compressible-flow", "gas-dynamics", "shocks", "isentropic", "aerody
 
 dependencies = [
     "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "typer>=0.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1.0",
 ]
 
 [project.urls]
 Homepage = "https://github.com/uahypersonics/gasdyn"
 Repository = "https://github.com/uahypersonics/gasdyn"
+
+[project.scripts]
+gasdyn = "gasdyn.cli.app:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]

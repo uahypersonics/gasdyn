@@ -99,6 +99,9 @@ nav:
     - Basic Usage: user-guide/basic-usage.md
   - Theory:
     - theory/index.md
+    - Taylor-Maccoll:
+      - theory/taylor_maccoll/index.md
+      - Derivation: theory/taylor_maccoll/derivation.md
   - API Reference:
     - api/index.md
   - Examples: examples.md
