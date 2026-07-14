@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import typer
 
-from gasdyn import solve_normal_shock
-from gasdyn.cli.formatters import print_result
+from gasdyn.relations.normal_shock import format_normal_shock_result, solve_normal_shock
 
 
 # --------------------------------------------------
@@ -23,7 +22,7 @@ def cmd_normal_shock(
     """Normal shock relations."""
     try:
         result = solve_normal_shock(mach_1=mach_1, p_ratio=p_ratio, gamma=gamma)
-        print_result(result, json)
+        typer.echo(format_normal_shock_result(result, json))
     except ValueError as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(1)

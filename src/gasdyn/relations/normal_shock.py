@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import dataclasses
+import json
 import math
 from dataclasses import dataclass
 from typing import ClassVar
@@ -39,6 +41,39 @@ class NormalShockResult:
         "p0_ratio": "-",
         "gamma":    "-",
     }
+
+
+def format_normal_shock_result(result: NormalShockResult, as_json: bool) -> str:
+    """Format normal-shock result for CLI output."""
+    if as_json:
+        return _to_json_normal_shock(result)
+    return _to_str_normal_shock(result)
+
+
+def _to_str_normal_shock(result: NormalShockResult) -> str:
+    """Format normal-shock result as a human-readable table."""
+    units = getattr(type(result), "_UNITS", {})
+    fields = dataclasses.fields(result)
+
+    # determine column width from the longest field name
+    col_width = max(len(f.name) for f in fields)
+
+    lines = ["=" * 60, "Normal Shock Results", "=" * 60]
+    for f in fields:
+        val = getattr(result, f.name)
+        unit = units.get(f.name, "-")
+        lines.append(f"{f.name:<{col_width}}  :  {val:>14g}  [{unit}]")
+    lines.append("=" * 60)
+
+    return "\n".join(lines)
+
+
+def _to_json_normal_shock(result: NormalShockResult) -> str:
+    """Serialise normal-shock result to JSON with [value, unit] pairs."""
+    units = getattr(type(result), "_UNITS", {})
+    values = dataclasses.asdict(result)
+    payload = {key: [value, units.get(key, "-")] for key, value in values.items()}
+    return json.dumps(payload, indent=2)
 
 
 def solve_normal_shock(

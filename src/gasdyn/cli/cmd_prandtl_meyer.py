@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import typer
 
-from gasdyn import solve_prandtl_meyer
-from gasdyn.cli.formatters import print_result
+from gasdyn.relations.prandtl_meyer import format_prandtl_meyer_result, solve_prandtl_meyer
 
 
 # --------------------------------------------------
@@ -29,7 +28,7 @@ def cmd_prandtl_meyer(
             deflection_angle=deflection_angle,
             gamma=gamma,
         )
-        print_result(result, json)
+        typer.echo(format_prandtl_meyer_result(result, json))
     except ValueError as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(1)

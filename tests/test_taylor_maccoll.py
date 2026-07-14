@@ -1,8 +1,11 @@
 """Tests for Taylor-Maccoll conical flow solver."""
 
+import json
+
 import pytest
 
 from gasdyn.taylor_maccoll.taylor_maccoll import (
+    format_taylor_maccoll_result,
     solve_taylor_maccoll,
     solve_taylor_maccoll_cone_shock,
     solve_taylor_maccoll_mach_cone,
@@ -151,3 +154,20 @@ def test_result_structure():
     assert hasattr(result, "surface_pressure_ratio")
     assert hasattr(result, "surface_temp_ratio")
     assert hasattr(result, "gamma")
+
+
+def test_taylor_maccoll_owned_formatter_text_output():
+    """Formatter in taylor_maccoll module returns human-readable text."""
+    result = solve_taylor_maccoll(mach=2.0, cone_angle=15.0)
+    output = format_taylor_maccoll_result(result, as_json=False)
+    assert "Taylor-Maccoll Results" in output
+    assert "shock_angle" in output
+
+
+def test_taylor_maccoll_owned_formatter_json_output():
+    """Formatter in taylor_maccoll module returns valid JSON payload."""
+    result = solve_taylor_maccoll(mach=2.0, cone_angle=15.0)
+    output = format_taylor_maccoll_result(result, as_json=True)
+    payload = json.loads(output)
+    assert "mach" in payload
+    assert payload["mach"][1] == "-"

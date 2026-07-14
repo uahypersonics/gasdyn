@@ -20,6 +20,7 @@ edit_uri: edit/main/docs/
 # --------------------------------------------------
 theme:
   name: material
+  variant: classic
   palette:
     - media: "(prefers-color-scheme)"
       toggle:
@@ -48,6 +49,7 @@ theme:
     - content.code.annotate
     - content.action.edit
     - content.action.view
+    - content.tabs.link
 
 # --------------------------------------------------
 # plugins
@@ -99,9 +101,19 @@ nav:
     - Basic Usage: user-guide/basic-usage.md
   - Theory:
     - theory/index.md
-    - Taylor-Maccoll:
-      - theory/taylor_maccoll/index.md
-      - Derivation: theory/taylor_maccoll/derivation.md
+    - Isentropic: theory/relations/isentropic.md
+    - Normal Shock: theory/relations/normal_shock.md
+    - Oblique Shock: theory/relations/oblique_shock.md
+    - Prandtl-Meyer: theory/relations/prandtl_meyer.md
+    - Taylor-Maccoll: theory/taylor_maccoll/index.md
+  - Validation and Verification:
+    - vnv/index.md
+    - Verification:
+      - vnv/verification/index.md
+    - Validation:
+      - vnv/validation/index.md
+  - CLI Reference:
+    - cli/index.md
   - API Reference:
     - api/index.md
   - Examples: examples.md

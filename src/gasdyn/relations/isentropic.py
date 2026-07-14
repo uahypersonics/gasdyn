@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import dataclasses
+import json
 import math
 from dataclasses import dataclass
 from typing import ClassVar
@@ -40,6 +42,39 @@ class IsentropicResult:
         "area_ratio": "-",
         "gamma":      "-",
     }
+
+
+def format_isentropic_result(result: IsentropicResult, as_json: bool) -> str:
+    """Format isentropic result for CLI output."""
+    if as_json:
+        return _to_json_isentropic(result)
+    return _to_str_isentropic(result)
+
+
+def _to_str_isentropic(result: IsentropicResult) -> str:
+    """Format isentropic result as a human-readable table."""
+    units = getattr(type(result), "_UNITS", {})
+    fields = dataclasses.fields(result)
+
+    # determine column width from the longest field name
+    col_width = max(len(f.name) for f in fields)
+
+    lines = ["=" * 60, "Isentropic Results", "=" * 60]
+    for f in fields:
+        val = getattr(result, f.name)
+        unit = units.get(f.name, "-")
+        lines.append(f"{f.name:<{col_width}}  :  {val:>14g}  [{unit}]")
+    lines.append("=" * 60)
+
+    return "\n".join(lines)
+
+
+def _to_json_isentropic(result: IsentropicResult) -> str:
+    """Serialise isentropic result to JSON with [value, unit] pairs."""
+    units = getattr(type(result), "_UNITS", {})
+    values = dataclasses.asdict(result)
+    payload = {key: [value, units.get(key, "-")] for key, value in values.items()}
+    return json.dumps(payload, indent=2)
 
 
 def solve_isentropic(

@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import typer
 
-from gasdyn import solve_oblique
-from gasdyn.cli.formatters import print_result
+from gasdyn.relations.oblique_shock import format_oblique_result, solve_oblique
 
 
 # --------------------------------------------------
@@ -31,7 +30,7 @@ def cmd_oblique(
             gamma=gamma,
             branch=branch,
         )
-        print_result(result, json)
+        typer.echo(format_oblique_result(result, json))
     except ValueError as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(1)

@@ -118,6 +118,14 @@ def test_cli_cone_error():
     assert result.exit_code == 1
 
 
+def test_cli_cone_no_args_shows_help():
+    """Test taylor-maccoll with no args shows subcommand help."""
+    result = runner.invoke(app, ["taylor-maccoll"])
+    assert result.exit_code == 0
+    assert "Solve Taylor-Maccoll equations" in result.stdout
+    assert "--mach" in result.stdout
+
+
 def test_cli_json_output():
     """Test JSON output option."""
     result = runner.invoke(app, ["isentropic", "--mach", "2.0", "--json"])
