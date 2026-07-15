@@ -44,7 +44,7 @@ def callback(
     verbose: Annotated[
         bool,
         typer.Option("--verbose", "-v",
-                     help="Enable informational output.",
+                     help="Enable verbose output.",
                      callback=verbose_callback
                     ),
     ] = False,
