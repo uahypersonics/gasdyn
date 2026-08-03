@@ -27,5 +27,5 @@ Install the development dependencies for testing, linting, and documentation:
 pip install -e ".[dev]"
 ```
 
-The development dependencies include pytest, Ruff, and
+The development dependencies include pytest, pytest-cov, Ruff, and
 [Zensical](https://zensical.org/) for building the documentation.
