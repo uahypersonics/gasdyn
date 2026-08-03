@@ -29,11 +29,11 @@ class PrandtlMeyerResult:
     # flow turning angle [deg]
     deflection_angle: float
     # static pressure ratio p2/p1 [-]
-    p_ratio: float
+    pres_ratio: float
     # static temperature ratio T2/T1 [-]
-    t_ratio: float
+    temp_ratio: float
     # density ratio rho2/rho1 [-]
-    rho_ratio: float
+    dens_ratio: float
     # ratio of specific heats [-]
     gamma: float
 
@@ -44,9 +44,9 @@ class PrandtlMeyerResult:
         "nu_1":            "deg",
         "nu_2":            "deg",
         "deflection_angle": "deg",
-        "p_ratio":         "-",
-        "t_ratio":         "-",
-        "rho_ratio":       "-",
+        "pres_ratio":      "-",
+        "temp_ratio":      "-",
+        "dens_ratio":      "-",
         "gamma":           "-",
     }
 
@@ -105,7 +105,7 @@ def solve_prandtl_meyer(
 
     Returns:
         GasdynResult with mach_1, mach_2, nu_1, nu_2, deflection_angle,
-        p_ratio, t_ratio, rho_ratio, gamma.
+        pres_ratio, temp_ratio, dens_ratio, gamma.
 
     Raises:
         ValueError: If wrong number of inputs or invalid values.
@@ -202,13 +202,13 @@ def solve_prandtl_meyer(
     # isentropic ratios: downstream/upstream
     t1_t0 = 1.0 / (1.0 + (gamma - 1) / 2.0 * mach_1**2)
     t2_t0 = 1.0 / (1.0 + (gamma - 1) / 2.0 * mach_2**2)
-    t_rat = t2_t0 / t1_t0
+    temp_rat = t2_t0 / t1_t0
 
     exponent = gamma / (gamma - 1)
-    p_rat = t_rat**exponent
+    pres_rat = temp_rat**exponent
 
     exponent = 1.0 / (gamma - 1)
-    rho_rat = t_rat**exponent
+    dens_rat = temp_rat**exponent
 
     # --------------------------------------------------
     # return result (angles in degrees)
@@ -220,9 +220,9 @@ def solve_prandtl_meyer(
         nu_1=math.degrees(nu1),
         nu_2=math.degrees(nu2),
         deflection_angle=math.degrees(theta),
-        p_ratio=p_rat,
-        t_ratio=t_rat,
-        rho_ratio=rho_rat,
+        pres_ratio=pres_rat,
+        temp_ratio=temp_rat,
+        dens_ratio=dens_rat,
         gamma=gamma,
     )
 

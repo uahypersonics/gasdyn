@@ -23,11 +23,11 @@ class IsentropicResult:
     # Mach number [-]
     mach: float
     # static-to-total pressure ratio p/p0 [-]
-    p_ratio: float
+    pres_ratio: float
     # static-to-total temperature ratio T/T0 [-]
-    t_ratio: float
+    temp_ratio: float
     # static-to-total density ratio rho/rho0 [-]
-    rho_ratio: float
+    dens_ratio: float
     # stream-tube area ratio A/A* [-]
     area_ratio: float
     # ratio of specific heats [-]
@@ -36,9 +36,9 @@ class IsentropicResult:
     # units for each field (used by CLI formatter)
     _UNITS: ClassVar[dict[str, str]] = {
         "mach":       "-",
-        "p_ratio":    "-",
-        "t_ratio":    "-",
-        "rho_ratio":  "-",
+        "pres_ratio": "-",
+        "temp_ratio": "-",
+        "dens_ratio": "-",
         "area_ratio": "-",
         "gamma":      "-",
     }
@@ -79,9 +79,9 @@ def _to_json_isentropic(result: IsentropicResult) -> str:
 
 def solve_isentropic(
     mach: float = None,
-    p_ratio: float = None,
-    t_ratio: float = None,
-    rho_ratio: float = None,
+    pres_ratio: float = None,
+    temp_ratio: float = None,
+    dens_ratio: float = None,
     area_ratio: float = None,
     gamma: float = 1.4,
     branch: str = "supersonic",
@@ -90,36 +90,37 @@ def solve_isentropic(
     Solve isentropic flow relations for a perfect gas.
 
     Accepts exactly ONE of the following inputs and solves for all others:
-    mach, p_ratio, t_ratio, rho_ratio, or area_ratio.
+    mach, pres_ratio, temp_ratio, dens_ratio, or area_ratio.
 
     Ratios are static-to-stagnation: p/p0, T/T0, rho/rho0.
     Area ratio is A/A* (area over sonic throat area).
 
     Args:
         mach: Mach number (M).
-        p_ratio: Static-to-stagnation pressure ratio (p/p0).
-        t_ratio: Static-to-stagnation temperature ratio (T/T0).
-        rho_ratio: Static-to-stagnation density ratio (rho/rho0).
+        pres_ratio: Static-to-stagnation pressure ratio (p/p0).
+        temp_ratio: Static-to-stagnation temperature ratio (T/T0).
+        dens_ratio: Static-to-stagnation density ratio (rho/rho0).
         area_ratio: Area ratio (A/A*).
         gamma: Ratio of specific heats (default 1.4 for air).
         branch: For area_ratio input, "subsonic" or "supersonic" (default "supersonic").
 
     Returns:
-        GasdynResult containing mach, p_ratio, t_ratio, rho_ratio, area_ratio, and gamma.
+        IsentropicResult containing mach, pres_ratio, temp_ratio, dens_ratio,
+        area_ratio, and gamma.
 
     Raises:
         ValueError: If zero or more than one input is provided, or if inputs are invalid.
 
     Examples:
         >>> result = solve_isentropic(mach=2.0)
-        >>> result.p_ratio
+        >>> result.pres_ratio
         0.12780...
         >>> result = solve_isentropic(area_ratio=1.6875, branch="supersonic")
         >>> result.mach
         2.0...
     """
     # validate inputs
-    inputs = [mach, p_ratio, t_ratio, rho_ratio, area_ratio]
+    inputs = [mach, pres_ratio, temp_ratio, dens_ratio, area_ratio]
     provided = sum(x is not None for x in inputs)
 
     if provided == 0:
@@ -145,28 +146,28 @@ def solve_isentropic(
             raise ValueError(f"Mach number must be > 0, got {mach}")
         M = mach
 
-    elif t_ratio is not None:
+    elif temp_ratio is not None:
         # solve from t_ratio: t_ratio = 1 / (1 + (gamma-1)/2 * M^2)
         # => M = sqrt(2/(gamma-1) * (1/t_ratio - 1))
-        if t_ratio <= 0 or t_ratio > 1:
-            raise ValueError(f"t_ratio must be in (0, 1], got {t_ratio}")
-        M = math.sqrt(2.0 / (gamma - 1) * (1.0 / t_ratio - 1.0))
+        if temp_ratio <= 0 or temp_ratio > 1:
+            raise ValueError(f"temp_ratio must be in (0, 1], got {temp_ratio}")
+        M = math.sqrt(2.0 / (gamma - 1) * (1.0 / temp_ratio - 1.0))
 
-    elif p_ratio is not None:
+    elif pres_ratio is not None:
         # solve from p_ratio: p_ratio = (1 + (gamma-1)/2 * M^2)^(-gamma/(gamma-1))
         # => M = sqrt(2/(gamma-1) * (p_ratio^(-(gamma-1)/gamma) - 1))
-        if p_ratio <= 0 or p_ratio > 1:
-            raise ValueError(f"p_ratio must be in (0, 1], got {p_ratio}")
+        if pres_ratio <= 0 or pres_ratio > 1:
+            raise ValueError(f"pres_ratio must be in (0, 1], got {pres_ratio}")
         exponent = -(gamma - 1) / gamma
-        M = math.sqrt(2.0 / (gamma - 1) * (p_ratio**exponent - 1.0))
+        M = math.sqrt(2.0 / (gamma - 1) * (pres_ratio**exponent - 1.0))
 
-    elif rho_ratio is not None:
+    elif dens_ratio is not None:
         # solve from rho_ratio: rho_ratio = (1 + (gamma-1)/2 * M^2)^(-1/(gamma-1))
         # => M = sqrt(2/(gamma-1) * (rho_ratio^(-(gamma-1)) - 1))
-        if rho_ratio <= 0 or rho_ratio > 1:
-            raise ValueError(f"rho_ratio must be in (0, 1], got {rho_ratio}")
+        if dens_ratio <= 0 or dens_ratio > 1:
+            raise ValueError(f"dens_ratio must be in (0, 1], got {dens_ratio}")
         exponent = -(gamma - 1)
-        M = math.sqrt(2.0 / (gamma - 1) * (rho_ratio**exponent - 1.0))
+        M = math.sqrt(2.0 / (gamma - 1) * (dens_ratio**exponent - 1.0))
 
     elif area_ratio is not None:
         # solve from area_ratio using root finding
@@ -209,9 +210,9 @@ def solve_isentropic(
     # compute all ratios from mach number
     # --------------------------------------------------
 
-    t_rat = _compute_t_ratio(M, gamma)
-    p_rat = _compute_p_ratio(M, gamma)
-    rho_rat = _compute_rho_ratio(M, gamma)
+    temp_rat = _compute_temp_ratio(M, gamma)
+    pres_rat = _compute_pres_ratio(M, gamma)
+    dens_rat = _compute_dens_ratio(M, gamma)
     a_rat = _compute_area_ratio(M, gamma)
 
     # --------------------------------------------------
@@ -220,9 +221,9 @@ def solve_isentropic(
 
     return IsentropicResult(
         mach=M,
-        p_ratio=p_rat,
-        t_ratio=t_rat,
-        rho_ratio=rho_rat,
+        pres_ratio=pres_rat,
+        temp_ratio=temp_rat,
+        dens_ratio=dens_rat,
         area_ratio=a_rat,
         gamma=gamma,
     )
@@ -233,23 +234,23 @@ def solve_isentropic(
 # --------------------------------------------------
 
 
-def _compute_t_ratio(M: float, gamma: float) -> float:
+def _compute_temp_ratio(M: float, gamma: float) -> float:
     """Compute T/T0 from Mach number."""
     return 1.0 / (1.0 + (gamma - 1) / 2.0 * M**2)
 
 
-def _compute_p_ratio(M: float, gamma: float) -> float:
+def _compute_pres_ratio(M: float, gamma: float) -> float:
     """Compute p/p0 from Mach number."""
-    t_rat = _compute_t_ratio(M, gamma)
+    temp_rat = _compute_temp_ratio(M, gamma)
     exponent = gamma / (gamma - 1)
-    return t_rat**exponent
+    return temp_rat**exponent
 
 
-def _compute_rho_ratio(M: float, gamma: float) -> float:
+def _compute_dens_ratio(M: float, gamma: float) -> float:
     """Compute rho/rho0 from Mach number."""
-    t_rat = _compute_t_ratio(M, gamma)
+    temp_rat = _compute_temp_ratio(M, gamma)
     exponent = 1.0 / (gamma - 1)
-    return t_rat**exponent
+    return temp_rat**exponent
 
 
 def _compute_area_ratio(M: float, gamma: float) -> float:
@@ -278,8 +279,8 @@ def pres_ratio_isentropic(mach_1: float, mach_2: float, gamma: float) -> float:
     Returns:
         p2/p1 [-]
     """
-    p1_p0 = _compute_p_ratio(mach_1, gamma)
-    p2_p0 = _compute_p_ratio(mach_2, gamma)
+    p1_p0 = _compute_pres_ratio(mach_1, gamma)
+    p2_p0 = _compute_pres_ratio(mach_2, gamma)
     return p2_p0 / p1_p0
 
 
@@ -294,6 +295,6 @@ def temp_ratio_isentropic(mach_1: float, mach_2: float, gamma: float) -> float:
     Returns:
         T2/T1 [-]
     """
-    t1_t0 = _compute_t_ratio(mach_1, gamma)
-    t2_t0 = _compute_t_ratio(mach_2, gamma)
+    t1_t0 = _compute_temp_ratio(mach_1, gamma)
+    t2_t0 = _compute_temp_ratio(mach_2, gamma)
     return t2_t0 / t1_t0

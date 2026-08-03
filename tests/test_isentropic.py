@@ -13,8 +13,8 @@ def test_solve_from_mach():
     """Test solving isentropic relations from Mach number."""
     result = solve_isentropic(mach=2.0)
     assert abs(result.mach - 2.0) < 1e-10
-    assert abs(result.p_ratio - 0.1278) < 1e-4
-    assert abs(result.t_ratio - 0.5556) < 1e-4
+    assert abs(result.pres_ratio - 0.1278) < 1e-4
+    assert abs(result.temp_ratio - 0.5556) < 1e-4
     assert abs(result.area_ratio - 1.6875) < 1e-4
 
 
@@ -31,7 +31,7 @@ def test_solve_subsonic():
     result = solve_isentropic(mach=0.5)
     assert abs(result.mach - 0.5) < 1e-10
     # at M=0.5, t_ratio should be close to 1 (low speed)
-    assert result.t_ratio > 0.9
+    assert result.temp_ratio > 0.9
 
 
 # --------------------------------------------------
@@ -41,27 +41,27 @@ def test_solve_subsonic():
 
 def test_solve_from_p_ratio():
     """Test solving from pressure ratio."""
-    result = solve_isentropic(p_ratio=0.1278)
+    result = solve_isentropic(pres_ratio=0.1278)
     assert abs(result.mach - 2.0) < 1e-3
-    assert abs(result.p_ratio - 0.1278) < 1e-4
+    assert abs(result.pres_ratio - 0.1278) < 1e-4
 
 
 def test_solve_from_t_ratio():
     """Test solving from temperature ratio."""
-    result = solve_isentropic(t_ratio=0.5556)
+    result = solve_isentropic(temp_ratio=0.5556)
     assert abs(result.mach - 2.0) < 1e-3
-    assert abs(result.t_ratio - 0.5556) < 1e-4
+    assert abs(result.temp_ratio - 0.5556) < 1e-4
 
 
 def test_solve_from_rho_ratio():
     """Test solving from density ratio."""
     # compute expected rho_ratio for M=2
     result_ref = solve_isentropic(mach=2.0)
-    rho_ref = result_ref.rho_ratio
+    rho_ref = result_ref.dens_ratio
 
-    result = solve_isentropic(rho_ratio=rho_ref)
+    result = solve_isentropic(dens_ratio=rho_ref)
     assert abs(result.mach - 2.0) < 1e-3
-    assert abs(result.rho_ratio - rho_ref) < 1e-4
+    assert abs(result.dens_ratio - rho_ref) < 1e-4
 
 
 def test_solve_from_area_ratio_supersonic():
@@ -104,7 +104,7 @@ def test_no_input_error():
 def test_multiple_inputs_error():
     """Test that providing multiple inputs raises ValueError."""
     with pytest.raises(ValueError, match="got multiple"):
-        solve_isentropic(mach=2.0, p_ratio=0.1278)
+        solve_isentropic(mach=2.0, pres_ratio=0.1278)
 
 
 def test_invalid_gamma():
@@ -131,31 +131,31 @@ def test_invalid_area_ratio():
         solve_isentropic(area_ratio=0.5)
 
 
-def test_invalid_p_ratio():
+def test_invalid_pres_ratio():
     """Test that invalid p_ratio raises ValueError."""
-    with pytest.raises(ValueError, match="p_ratio must be in"):
-        solve_isentropic(p_ratio=1.5)
+    with pytest.raises(ValueError, match="pres_ratio must be in"):
+        solve_isentropic(pres_ratio=1.5)
 
-    with pytest.raises(ValueError, match="p_ratio must be in"):
-        solve_isentropic(p_ratio=0.0)
+    with pytest.raises(ValueError, match="pres_ratio must be in"):
+        solve_isentropic(pres_ratio=0.0)
 
 
-def test_invalid_t_ratio():
+def test_invalid_temp_ratio():
     """Test that invalid t_ratio raises ValueError."""
-    with pytest.raises(ValueError, match="t_ratio must be in"):
-        solve_isentropic(t_ratio=1.5)
+    with pytest.raises(ValueError, match="temp_ratio must be in"):
+        solve_isentropic(temp_ratio=1.5)
 
-    with pytest.raises(ValueError, match="t_ratio must be in"):
-        solve_isentropic(t_ratio=0.0)
+    with pytest.raises(ValueError, match="temp_ratio must be in"):
+        solve_isentropic(temp_ratio=0.0)
 
 
-def test_invalid_rho_ratio():
+def test_invalid_dens_ratio():
     """Test that invalid rho_ratio raises ValueError."""
-    with pytest.raises(ValueError, match="rho_ratio must be in"):
-        solve_isentropic(rho_ratio=1.5)
+    with pytest.raises(ValueError, match="dens_ratio must be in"):
+        solve_isentropic(dens_ratio=1.5)
 
-    with pytest.raises(ValueError, match="rho_ratio must be in"):
-        solve_isentropic(rho_ratio=0.0)
+    with pytest.raises(ValueError, match="dens_ratio must be in"):
+        solve_isentropic(dens_ratio=0.0)
 
 
 def test_invalid_branch():
@@ -177,7 +177,7 @@ def test_different_gamma():
     assert result.gamma == 1.67
     # ratios should be different from air
     result_air = solve_isentropic(mach=2.0, gamma=1.4)
-    assert abs(result.p_ratio - result_air.p_ratio) > 1e-3
+    assert abs(result.pres_ratio - result_air.pres_ratio) > 1e-3
 
 
 # --------------------------------------------------
@@ -189,8 +189,8 @@ def test_result_structure():
     """Test that result contains expected fields."""
     result = solve_isentropic(mach=2.0)
     assert hasattr(result, "mach")
-    assert hasattr(result, "p_ratio")
-    assert hasattr(result, "t_ratio")
-    assert hasattr(result, "rho_ratio")
+    assert hasattr(result, "pres_ratio")
+    assert hasattr(result, "temp_ratio")
+    assert hasattr(result, "dens_ratio")
     assert hasattr(result, "area_ratio")
     assert hasattr(result, "gamma")

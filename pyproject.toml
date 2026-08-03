@@ -34,11 +34,13 @@ dependencies = [
 dev = [
     "pytest>=7.0",
     "ruff>=0.1.0",
+    "zensical",
 ]
 
 [project.urls]
 Homepage = "https://github.com/uahypersonics/gasdyn"
 Repository = "https://github.com/uahypersonics/gasdyn"
+Documentation = "https://uahypersonics.github.io/gasdyn"
 
 [project.scripts]
 gasdyn = "gasdyn.cli.app:cli"

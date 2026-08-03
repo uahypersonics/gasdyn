@@ -18,3 +18,14 @@ pip install -e .
 
 - Python >= 3.11
 - NumPy >= 1.24
+
+## Development
+
+Install the development dependencies for testing, linting, and documentation:
+
+```bash
+pip install -e ".[dev]"
+```
+
+The development dependencies include pytest, Ruff, and
+[Zensical](https://zensical.org/) for building the documentation.

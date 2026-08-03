@@ -27,7 +27,7 @@ def test_cli_isentropic():
     result = runner.invoke(app, ["isentropic", "--mach", "2.0"])
     assert result.exit_code == 0
     assert "mach" in result.stdout
-    assert "p_ratio" in result.stdout
+    assert "pres_ratio" in result.stdout
 
 
 def test_cli_isentropic_area_ratio():
@@ -52,9 +52,9 @@ def test_cli_normal_shock():
     assert "mach" in result.stdout
 
 
-def test_cli_normal_shock_from_p_ratio():
+def test_cli_normal_shock_from_pres_ratio():
     """Test normal shock from pressure ratio."""
-    result = runner.invoke(app, ["normal-shock", "--p-ratio", "4.5"])
+    result = runner.invoke(app, ["normal-shock", "--pres-ratio", "4.5"])
     assert result.exit_code == 0
     assert "mach_1" in result.stdout
 

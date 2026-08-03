@@ -116,9 +116,9 @@ def test_downstream_properties():
     """Test that downstream properties are computed."""
     result = solve_oblique(mach=2.0, deflection_angle=10.0)
     assert result.mach_2 > 0
-    assert result.p_ratio > 1  # pressure increases
-    assert result.t_ratio > 1  # temperature increases
-    assert result.p0_ratio < 1  # stagnation pressure decreases
+    assert result.pres_ratio > 1  # pressure increases
+    assert result.temp_ratio > 1  # temperature increases
+    assert result.pres_stag_ratio < 1  # stagnation pressure decreases
 
 
 def test_normal_components():
@@ -143,5 +143,5 @@ def test_result_structure():
     assert hasattr(result, "mn_2")
     assert hasattr(result, "deflection_angle")
     assert hasattr(result, "shock_angle")
-    assert hasattr(result, "p_ratio")
+    assert hasattr(result, "pres_ratio")
     assert hasattr(result, "gamma")

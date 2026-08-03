@@ -21,25 +21,25 @@ class NormalShockResult:
     # downstream Mach number [-]
     mach_2: float
     # static pressure ratio p2/p1 [-]
-    p_ratio: float
+    pres_ratio: float
     # static temperature ratio T2/T1 [-]
-    t_ratio: float
+    temp_ratio: float
     # density ratio rho2/rho1 [-]
-    rho_ratio: float
+    dens_ratio: float
     # total pressure ratio p02/p01 [-]
-    p0_ratio: float
+    pres_stag_ratio: float
     # ratio of specific heats [-]
     gamma: float
 
     # units for each field (used by CLI formatter)
     _UNITS: ClassVar[dict[str, str]] = {
-        "mach_1":   "-",
-        "mach_2":   "-",
-        "p_ratio":  "-",
-        "t_ratio":  "-",
-        "rho_ratio": "-",
-        "p0_ratio": "-",
-        "gamma":    "-",
+        "mach_1":          "-",
+        "mach_2":          "-",
+        "pres_ratio":      "-",
+        "temp_ratio":      "-",
+        "dens_ratio":      "-",
+        "pres_stag_ratio": "-",
+        "gamma":           "-",
     }
 
 
@@ -78,24 +78,24 @@ def _to_json_normal_shock(result: NormalShockResult) -> str:
 
 def solve_normal_shock(
     mach_1: float = None,
-    p_ratio: float = None,
+    pres_ratio: float = None,
     gamma: float = 1.4,
 ) -> NormalShockResult:
     """
     Solve normal shock relations for a perfect gas.
 
-    Accepts exactly ONE of: mach_1 or p_ratio, and solves for all others.
+    Accepts exactly ONE of: mach_1 or pres_ratio, and solves for all others.
 
     Ratios are downstream/upstream: p2/p1, T2/T1, rho2/rho1, p02/p01.
 
     Args:
         mach_1: Upstream Mach number (M1).
-        p_ratio: Static pressure ratio across shock (p2/p1).
+        pres_ratio: Static pressure ratio across shock (p2/p1).
         gamma: Ratio of specific heats (default 1.4 for air).
 
     Returns:
-        GasdynResult containing mach_1, mach_2, p_ratio, t_ratio, rho_ratio,
-        p0_ratio, and gamma.
+        NormalShockResult containing mach_1, mach_2, pres_ratio, temp_ratio,
+        dens_ratio, pres_stag_ratio, and gamma.
 
     Raises:
         ValueError: If zero or more than one input is provided, or if inputs are invalid.
@@ -104,11 +104,11 @@ def solve_normal_shock(
         >>> result = solve_normal_shock(mach_1=2.0)
         >>> result.mach_2
         0.5774...
-        >>> result.p_ratio
+        >>> result.pres_ratio
         4.5
     """
     # validate inputs
-    inputs = [mach_1, p_ratio]
+    inputs = [mach_1, pres_ratio]
     provided = sum(x is not None for x in inputs)
 
     if provided == 0:
@@ -130,12 +130,12 @@ def solve_normal_shock(
             raise ValueError(f"mach_1 must be > 1, got {mach_1}")
         M1 = mach_1
 
-    elif p_ratio is not None:
+    elif pres_ratio is not None:
         # solve from p_ratio: p_ratio = 1 + (2*gamma/(gamma+1)) * (M1^2 - 1)
         # => M1 = sqrt(1 + (p_ratio - 1) * (gamma+1) / (2*gamma))
-        if p_ratio <= 1:
-            raise ValueError(f"p_ratio must be > 1, got {p_ratio}")
-        M1 = math.sqrt(1.0 + (p_ratio - 1.0) * (gamma + 1) / (2.0 * gamma))
+        if pres_ratio <= 1:
+            raise ValueError(f"pres_ratio must be > 1, got {pres_ratio}")
+        M1 = math.sqrt(1.0 + (pres_ratio - 1.0) * (gamma + 1) / (2.0 * gamma))
 
     else:
         raise ValueError("No valid input provided")
@@ -148,10 +148,10 @@ def solve_normal_shock(
     p_rat = 1.0 + (2.0 * gamma / (gamma + 1)) * (M1**2 - 1.0)
 
     # density ratio
-    rho_rat = ((gamma + 1) * M1**2) / ((gamma - 1) * M1**2 + 2.0)
+    dens_rat = dens_ratio_normal(M1, gamma)
 
     # temperature ratio
-    t_rat = p_rat / rho_rat
+    temp_rat = p_rat / dens_rat
 
     # downstream mach number
     M2_squared = (1.0 + 0.5 * (gamma - 1) * M1**2) / (
@@ -173,10 +173,10 @@ def solve_normal_shock(
     return NormalShockResult(
         mach_1=M1,
         mach_2=M2,
-        p_ratio=p_rat,
-        t_ratio=t_rat,
-        rho_ratio=rho_rat,
-        p0_ratio=p0_rat,
+        pres_ratio=p_rat,
+        temp_ratio=temp_rat,
+        dens_ratio=dens_rat,
+        pres_stag_ratio=p0_rat,
         gamma=gamma,
     )
 
@@ -197,6 +197,23 @@ def pres_ratio_normal(mn1: float, gamma: float) -> float:
     return 1.0 + (2.0 * gamma / (gamma + 1)) * (mn1**2 - 1.0)
 
 
+def dens_ratio_normal(mn1: float, gamma: float) -> float:
+    """Static density ratio rho2/rho1 across a normal shock.
+
+    Args:
+        mn1: Upstream normal Mach number.
+        gamma: Ratio of specific heats.
+
+    Returns:
+        rho2/rho1 [-]
+    """
+    numerator = (gamma + 1.0) * mn1**2
+    denominator = (gamma - 1.0) * mn1**2 + 2.0
+    dens_ratio = numerator / denominator
+
+    return dens_ratio
+
+
 def temp_ratio_normal(mn1: float, gamma: float) -> float:
     """Static temperature ratio T2/T1 across a normal shock.
 
@@ -207,9 +224,9 @@ def temp_ratio_normal(mn1: float, gamma: float) -> float:
     Returns:
         T2/T1 [-]
     """
-    p_rat   = pres_ratio_normal(mn1, gamma)
-    rho_rat = ((gamma + 1) * mn1**2) / ((gamma - 1) * mn1**2 + 2.0)
-    return p_rat / rho_rat
+    p_rat = pres_ratio_normal(mn1, gamma)
+    dens_rat = dens_ratio_normal(mn1, gamma)
+    return p_rat / dens_rat
 
 
 def mach_downstream_normal(mn1: float, gamma: float) -> float:

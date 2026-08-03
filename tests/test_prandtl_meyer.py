@@ -47,19 +47,19 @@ def test_solve_mach_1_from_mach_2_and_deflection():
 def test_expansion_decreases_pressure():
     """Test that expansion decreases pressure."""
     result = solve_prandtl_meyer(mach_1=2.0, deflection_angle=10.0)
-    assert result.p_ratio < 1.0
+    assert result.pres_ratio < 1.0
 
 
 def test_expansion_decreases_temperature():
     """Test that expansion decreases temperature."""
     result = solve_prandtl_meyer(mach_1=2.0, deflection_angle=10.0)
-    assert result.t_ratio < 1.0
+    assert result.temp_ratio < 1.0
 
 
 def test_expansion_decreases_density():
     """Test that expansion decreases density."""
     result = solve_prandtl_meyer(mach_1=2.0, deflection_angle=10.0)
-    assert result.rho_ratio < 1.0
+    assert result.dens_ratio < 1.0
 
 
 # --------------------------------------------------
@@ -138,7 +138,7 @@ def test_result_structure():
     assert hasattr(result, "nu_1")
     assert hasattr(result, "nu_2")
     assert hasattr(result, "deflection_angle")
-    assert hasattr(result, "p_ratio")
-    assert hasattr(result, "t_ratio")
-    assert hasattr(result, "rho_ratio")
+    assert hasattr(result, "pres_ratio")
+    assert hasattr(result, "temp_ratio")
+    assert hasattr(result, "dens_ratio")
     assert hasattr(result, "gamma")

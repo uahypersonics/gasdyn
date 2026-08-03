@@ -124,14 +124,14 @@ def test_cone_high_mach():
 def test_normal_shock_high_mach():
     """Test normal shock at high Mach number."""
     result = solve_normal_shock(mach_1=10.0)
-    assert result.p_ratio > 100
+    assert result.pres_ratio > 100
 
 
 def test_normal_shock_near_sonic():
     """Test normal shock just above sonic."""
     result = solve_normal_shock(mach_1=1.01)
     assert result.mach_2 < 1.0
-    assert result.p_ratio > 1.0
+    assert result.pres_ratio > 1.0
 
 
 # --------------------------------------------------

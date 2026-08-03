@@ -15,9 +15,15 @@ from gasdyn.relations.isentropic import format_isentropic_result, solve_isentrop
 # --------------------------------------------------
 def cmd_isentropic(
     mach: float | None = typer.Option(None, "--mach", help="Mach number"),
-    p_ratio: float | None = typer.Option(None, "--p-ratio", help="Pressure ratio p/p0"),
-    t_ratio: float | None = typer.Option(None, "--t-ratio", help="Temperature ratio T/T0"),
-    rho_ratio: float | None = typer.Option(None, "--rho-ratio", help="Density ratio rho/rho0"),
+    pres_ratio: float | None = typer.Option(
+        None, "--pres-ratio", help="Pressure ratio p/p0"
+    ),
+    temp_ratio: float | None = typer.Option(
+        None, "--temp-ratio", help="Temperature ratio T/T0"
+    ),
+    dens_ratio: float | None = typer.Option(
+        None, "--dens-ratio", help="Density ratio rho/rho0"
+    ),
     area_ratio: float | None = typer.Option(None, "--area-ratio", help="Area ratio A/A*"),
     branch: str = typer.Option("supersonic", "--branch", help="Branch for area ratio (subsonic/supersonic)"),
     gamma: float = typer.Option(1.4, "--gamma", help="Ratio of specific heats"),
@@ -27,9 +33,9 @@ def cmd_isentropic(
     try:
         result = solve_isentropic(
             mach=mach,
-            p_ratio=p_ratio,
-            t_ratio=t_ratio,
-            rho_ratio=rho_ratio,
+            pres_ratio=pres_ratio,
+            temp_ratio=temp_ratio,
+            dens_ratio=dens_ratio,
             area_ratio=area_ratio,
             gamma=gamma,
             branch=branch,

@@ -15,13 +15,17 @@ from gasdyn.relations.normal_shock import format_normal_shock_result, solve_norm
 # --------------------------------------------------
 def cmd_normal_shock(
     mach_1: float | None = typer.Option(None, "--mach-1", help="Upstream Mach number"),
-    p_ratio: float | None = typer.Option(None, "--p-ratio", help="Pressure ratio p2/p1"),
+    pres_ratio: float | None = typer.Option(
+        None, "--pres-ratio", help="Pressure ratio p2/p1"
+    ),
     gamma: float = typer.Option(1.4, "--gamma", help="Ratio of specific heats"),
     json: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Normal shock relations."""
     try:
-        result = solve_normal_shock(mach_1=mach_1, p_ratio=p_ratio, gamma=gamma)
+        result = solve_normal_shock(
+            mach_1=mach_1, pres_ratio=pres_ratio, gamma=gamma
+        )
         typer.echo(format_normal_shock_result(result, json))
     except ValueError as exc:
         typer.echo(f"error: {exc}", err=True)

@@ -37,13 +37,13 @@ class ObliqueResult:
     # shock wave angle [deg]
     shock_angle: float
     # static pressure ratio p2/p1 [-]
-    p_ratio: float
+    pres_ratio: float
     # static temperature ratio T2/T1 [-]
-    t_ratio: float
+    temp_ratio: float
     # density ratio rho2/rho1 [-]
-    rho_ratio: float
+    dens_ratio: float
     # total pressure ratio p02/p01 [-]
-    p0_ratio: float
+    pres_stag_ratio: float
     # ratio of specific heats [-]
     gamma: float
 
@@ -55,10 +55,10 @@ class ObliqueResult:
         "mn_2":            "-",
         "deflection_angle": "deg",
         "shock_angle":     "deg",
-        "p_ratio":         "-",
-        "t_ratio":         "-",
-        "rho_ratio":       "-",
-        "p0_ratio":        "-",
+        "pres_ratio":      "-",
+        "temp_ratio":      "-",
+        "dens_ratio":      "-",
+        "pres_stag_ratio": "-",
         "gamma":           "-",
     }
 
@@ -117,7 +117,7 @@ def solve_oblique(
 
     Returns:
         GasdynResult with mach_1, mach_2, mn_1, mn_2, deflection_angle, shock_angle,
-        p_ratio, t_ratio, rho_ratio, p0_ratio, gamma.
+        pres_ratio, temp_ratio, dens_ratio, pres_stag_ratio, gamma.
 
     Raises:
         ValueError: If wrong number of inputs or invalid values.
@@ -225,8 +225,8 @@ def solve_oblique(
 
     # normal shock relations for normal component
     p_rat = 1.0 + (2.0 * gamma / (gamma + 1)) * (Mn1**2 - 1.0)
-    rho_rat = ((gamma + 1) * Mn1**2) / ((gamma - 1) * Mn1**2 + 2.0)
-    t_rat = p_rat / rho_rat
+    dens_rat = ((gamma + 1) * Mn1**2) / ((gamma - 1) * Mn1**2 + 2.0)
+    temp_rat = p_rat / dens_rat
 
     # downstream normal mach
     Mn2_squared = (1.0 + 0.5 * (gamma - 1) * Mn1**2) / (
@@ -253,10 +253,10 @@ def solve_oblique(
         mn_2=Mn2,
         deflection_angle=math.degrees(theta),
         shock_angle=math.degrees(beta),
-        p_ratio=p_rat,
-        t_ratio=t_rat,
-        rho_ratio=rho_rat,
-        p0_ratio=p0_rat,
+        pres_ratio=p_rat,
+        temp_ratio=temp_rat,
+        dens_ratio=dens_rat,
+        pres_stag_ratio=p0_rat,
         gamma=gamma,
     )
 

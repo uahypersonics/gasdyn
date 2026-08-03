@@ -4,7 +4,7 @@ Compressible inviscid flow calculator: shocks, expansions, isentropic relations.
 
 [![Test](https://github.com/uahypersonics/gasdyn/actions/workflows/test.yml/badge.svg)](https://github.com/uahypersonics/gasdyn/actions/workflows/test.yml)
 [![PyPI](https://img.shields.io/pypi/v/gasdyn)](https://pypi.org/project/gasdyn/)
-[![Docs](https://img.shields.io/badge/docs-mkdocs-blue)](https://uahypersonics.github.io/gasdyn/)
+[![Docs](https://img.shields.io/badge/docs-Zensical-blue)](https://uahypersonics.github.io/gasdyn/)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-≥3.11-blue.svg)](https://www.python.org/downloads/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
