@@ -1,5 +1,6 @@
 """Tests for CLI using Typer's test runner."""
 
+from click.utils import strip_ansi
 from typer.testing import CliRunner
 
 from gasdyn.cli.app import cli as app
@@ -121,9 +122,11 @@ def test_cli_cone_error():
 def test_cli_cone_no_args_shows_help():
     """Test taylor-maccoll with no args shows subcommand help."""
     result = runner.invoke(app, ["taylor-maccoll"])
+    output = strip_ansi(result.stdout)
+
     assert result.exit_code == 0
-    assert "Solve Taylor-Maccoll equations" in result.stdout
-    assert "--mach" in result.stdout
+    assert "Solve Taylor-Maccoll equations" in output
+    assert "--mach" in output
 
 
 def test_cli_json_output():
