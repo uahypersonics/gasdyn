@@ -97,7 +97,9 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - User Guide:
-    - user-guide/index.md
+    - Overview: user-guide/index.md
+    - Workflow: user-guide/workflow.md
+    - Configuration: user-guide/configuration.md
     - Basic Usage: user-guide/basic-usage.md
   - Theory:
     - theory/index.md
@@ -106,15 +108,15 @@ nav:
     - Oblique Shock: theory/relations/oblique_shock.md
     - Prandtl-Meyer: theory/relations/prandtl_meyer.md
     - Taylor-Maccoll: theory/taylor_maccoll/index.md
+  - CLI Reference:
+    - cli/index.md
+  - API Reference:
+    - api/index.md
   - Validation and Verification:
     - vnv/index.md
     - Verification:
       - vnv/verification/index.md
     - Validation:
       - vnv/validation/index.md
-  - CLI Reference:
-    - cli/index.md
-  - API Reference:
-    - api/index.md
   - Examples: examples.md
   - Nomenclature: nomenclature.md
