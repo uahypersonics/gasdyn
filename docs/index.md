@@ -45,5 +45,6 @@ covers how to set up a dev environment, run tests, and submit a PR.
 
 ## License
 
-BSD-3-Clause. See [LICENSE](https://github.com/uahypersonics/gasdyn/blob/main/LICENSE)
-for details.
+GNU General Public License v3.0 or later. See
+[LICENSE](https://github.com/uahypersonics/gasdyn/blob/main/LICENSE) for the
+complete license terms.
