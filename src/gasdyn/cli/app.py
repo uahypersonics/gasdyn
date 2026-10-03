@@ -10,11 +10,11 @@ from typing import Annotated
 import typer
 
 from gasdyn.cli.callbacks import verbose_callback, version_callback
-from gasdyn.cli.cmd_isentropic import cmd_isentropic
-from gasdyn.cli.cmd_normal_shock import cmd_normal_shock
-from gasdyn.cli.cmd_oblique import cmd_oblique
-from gasdyn.cli.cmd_prandtl_meyer import cmd_prandtl_meyer
-from gasdyn.cli.cmd_taylor_maccoll import cmd_taylor_maccoll
+from gasdyn.cli.cmd_isentropic import isentropic_app
+from gasdyn.cli.cmd_normal_shock import normal_shock_app
+from gasdyn.cli.cmd_oblique import oblique_app
+from gasdyn.cli.cmd_prandtl_meyer import prandtl_meyer_app
+from gasdyn.cli.cmd_taylor_maccoll import taylor_maccoll_app
 
 # --------------------------------------------------
 # build the app
@@ -26,6 +26,7 @@ cli = typer.Typer(
     add_completion=False,
 )
 
+
 # --------------------------------------------------
 # global options via callback
 # --------------------------------------------------
@@ -34,31 +35,31 @@ def callback(
     # --version -V option
     version: Annotated[
         bool | None,
-        typer.Option("--version", "-V",
-                     help="Show version and exit.",
-                     callback=version_callback,
-                     is_eager=True
-                    ),
+        typer.Option(
+            "--version",
+            "-V",
+            help="Show version and exit.",
+            callback=version_callback,
+            is_eager=True,
+        ),
     ] = None,
     # --verbose -v option
     verbose: Annotated[
         bool,
-        typer.Option("--verbose", "-v",
-                     help="Enable verbose output.",
-                     callback=verbose_callback
-                    ),
+        typer.Option("--verbose", "-v", help="Enable verbose output.", callback=verbose_callback),
     ] = False,
 ) -> None:
     """Gas dynamics calculator."""
 
+
 # --------------------------------------------------
 # register commands
 # --------------------------------------------------
-cli.command(name="isentropic")(cmd_isentropic)
-cli.command(name="normal-shock")(cmd_normal_shock)
-cli.command(name="oblique")(cmd_oblique)
-cli.command(name="prandtl-meyer")(cmd_prandtl_meyer)
-cli.command(name="taylor-maccoll")(cmd_taylor_maccoll)
+cli.add_typer(isentropic_app, name="isentropic")
+cli.add_typer(normal_shock_app, name="normal-shock")
+cli.add_typer(oblique_app, name="oblique")
+cli.add_typer(prandtl_meyer_app, name="prandtl-meyer")
+cli.add_typer(taylor_maccoll_app, name="taylor-maccoll")
 
 # --------------------------------------------------
 # main entry point

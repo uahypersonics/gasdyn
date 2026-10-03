@@ -22,6 +22,7 @@ def test_mach_cone_returns_shock_angle():
     result = solve_taylor_maccoll_mach_cone(mach=2.0, cone_angle=15.0)
     assert result.shock_angle > 15.0       # shock angle > cone angle
     assert result.shock_angle < 90.0
+    assert 0.0 < result.mach_cone < result.mach
     assert result.surface_pressure_ratio > 1.0
 
 
@@ -29,6 +30,7 @@ def test_mach_shock_returns_cone_angle():
     """solve_taylor_maccoll_mach_shock: M=3, shock=25 deg returns cone angle."""
     result = solve_taylor_maccoll_mach_shock(mach=3.0, shock_angle=25.0)
     assert 0.0 < result.cone_angle < 25.0  # cone angle < shock angle
+    assert 0.0 < result.mach_cone < result.mach
     assert result.surface_pressure_ratio > 1.0
 
 
@@ -37,6 +39,7 @@ def test_cone_shock_returns_mach():
     result = solve_taylor_maccoll_cone_shock(cone_angle=14.68, shock_angle=25.0)
     assert result.mach > 1.0
     assert abs(result.mach - 3.0) < 0.1   # should recover approximately M=3
+    assert 0.0 < result.mach_cone < result.mach
     assert result.surface_pressure_ratio > 1.0
 
 
@@ -151,6 +154,7 @@ def test_result_structure():
     assert hasattr(result, "mach")
     assert hasattr(result, "cone_angle")
     assert hasattr(result, "shock_angle")
+    assert hasattr(result, "mach_cone")
     assert hasattr(result, "surface_pressure_ratio")
     assert hasattr(result, "surface_temp_ratio")
     assert hasattr(result, "gamma")
@@ -162,6 +166,7 @@ def test_taylor_maccoll_owned_formatter_text_output():
     output = format_taylor_maccoll_result(result, as_json=False)
     assert "Taylor-Maccoll Results" in output
     assert "shock_angle" in output
+    assert "mach_cone" in output
 
 
 def test_taylor_maccoll_owned_formatter_json_output():
@@ -171,3 +176,5 @@ def test_taylor_maccoll_owned_formatter_json_output():
     payload = json.loads(output)
     assert "mach" in payload
     assert payload["mach"][1] == "-"
+    assert "mach_cone" in payload
+    assert payload["mach_cone"][1] == "-"

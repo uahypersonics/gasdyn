@@ -53,6 +53,8 @@ class TaylorMaccollResult:
     cone_angle: float
     # shock wave angle [deg]
     shock_angle: float
+    # Mach number at the cone surface [-]
+    mach_cone: float
     # surface static pressure ratio p_s/p_inf [-]
     surface_pressure_ratio: float
     # surface static temperature ratio T_s/T_inf [-]
@@ -65,6 +67,7 @@ class TaylorMaccollResult:
         "mach":                   "-",
         "cone_angle":             "deg",
         "shock_angle":            "deg",
+        "mach_cone":              "-",
         "surface_pressure_ratio": "-",
         "surface_temp_ratio":     "-",
         "gamma":                  "-",
@@ -332,6 +335,7 @@ def solve_taylor_maccoll_mach_cone(
         mach=mach,
         cone_angle=cone_angle,
         shock_angle=math.degrees(beta),
+        mach_cone=mach_cone,
         surface_pressure_ratio=pres_ratio,
         surface_temp_ratio=temp_ratio,
         gamma=gamma,
@@ -373,6 +377,7 @@ def solve_taylor_maccoll_mach_shock(
         mach=mach,
         cone_angle=math.degrees(theta_c),
         shock_angle=shock_angle,
+        mach_cone=mach_cone,
         surface_pressure_ratio=pres_ratio,
         surface_temp_ratio=temp_ratio,
         gamma=gamma,
@@ -421,6 +426,7 @@ def solve_taylor_maccoll_cone_shock(
         mach=mach,
         cone_angle=cone_angle,
         shock_angle=shock_angle,
+        mach_cone=mach_cone,
         surface_pressure_ratio=pres_ratio,
         surface_temp_ratio=temp_ratio,
         gamma=gamma,

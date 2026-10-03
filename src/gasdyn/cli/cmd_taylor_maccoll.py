@@ -5,39 +5,159 @@
 # --------------------------------------------------
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 
-from gasdyn.taylor_maccoll.taylor_maccoll import format_taylor_maccoll_result, solve_taylor_maccoll
-
+from gasdyn.config import (
+    DEFAULT_CONFIG_PATH,
+    TAYLOR_MACCOLL_TEMPLATE,
+    TaylorMaccollConfig,
+    parse_taylor_maccoll_config,
+    read_config,
+    write_config,
+)
+from gasdyn.runners import run_taylor_maccoll
 
 # --------------------------------------------------
-# taylor-maccoll command
+# Taylor-Maccoll command group
 # --------------------------------------------------
-def cmd_taylor_maccoll(
-    ctx: typer.Context,
-    mach: float | None = typer.Option(None, "--mach", help="Freestream Mach number"),
-    cone_angle: float | None = typer.Option(None, "--cone-angle", help="Cone half-angle (degrees)"),
-    shock_angle: float | None = typer.Option(None, "--shock-angle", help="Shock wave angle (degrees)"),
-    gamma: float = typer.Option(1.4, "--gamma", help="Ratio of specific heats"),
-    json: bool = typer.Option(False, "--json", help="Output as JSON"),
-) -> None:
-    """Solve Taylor-Maccoll equations."""
-    # show command help when no primary solver inputs are provided
-    if mach is None and cone_angle is None and shock_angle is None:
+taylor_maccoll_app = typer.Typer(
+    name="taylor-maccoll",
+    help="Taylor-Maccoll conical-flow calculations.",
+    no_args_is_help=False,
+    invoke_without_command=True,
+)
+
+
+@taylor_maccoll_app.callback()
+def taylor_maccoll_callback(ctx: typer.Context) -> None:
+    """Show Taylor-Maccoll help when no action is provided."""
+    if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit(0)
 
+
+# --------------------------------------------------
+# initialize Taylor-Maccoll config
+# --------------------------------------------------
+@taylor_maccoll_app.command(name="init")
+def cmd_init_taylor_maccoll(
+    output: Path = typer.Option(
+        DEFAULT_CONFIG_PATH,
+        "--output",
+        "-o",
+        help="Output config file.",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Overwrite an existing config.",
+    ),
+) -> None:
+    """Write a focused Taylor-Maccoll config file."""
     try:
-        result = solve_taylor_maccoll(
-            mach=mach,
-            cone_angle=cone_angle,
-            shock_angle=shock_angle,
-            gamma=gamma,
+        config_path = write_config(
+            TAYLOR_MACCOLL_TEMPLATE,
+            output,
+            force=force,
         )
-
-        # print result
-        typer.echo(format_taylor_maccoll_result(result, json))
-
-    except ValueError as exc:
+    except FileExistsError as exc:
         typer.echo(f"error: {exc}", err=True)
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
+
+    typer.echo(f"Written: {config_path}")
+    typer.echo(f"Then run: gasdyn taylor-maccoll run --config {config_path}")
+
+
+# --------------------------------------------------
+# run Taylor-Maccoll from config or direct options
+# --------------------------------------------------
+@taylor_maccoll_app.command(name="run")
+def cmd_run_taylor_maccoll(
+    config: Path | None = typer.Option(
+        None,
+        "--config",
+        "-c",
+        help="Config file. Defaults to gasdyn.toml.",
+    ),
+    mach: float | None = typer.Option(None, "--mach", help="Freestream Mach number"),
+    cone_angle: float | None = typer.Option(
+        None,
+        "--cone-angle",
+        help="Cone half-angle (degrees)",
+    ),
+    shock_angle: float | None = typer.Option(
+        None,
+        "--shock-angle",
+        help="Shock wave angle (degrees)",
+    ),
+    gamma: float = typer.Option(1.4, "--gamma", help="Ratio of specific heats"),
+    beta_guess: float | None = typer.Option(
+        None,
+        "--beta-guess",
+        help="Initial shock-angle guess (degrees)",
+    ),
+    json: bool = typer.Option(False, "--json", help="Output as JSON"),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Write the result to a file.",
+    ),
+    upstream_state: Path | None = typer.Option(
+        None,
+        "--upstream-state",
+        help="Canonical upstream FlowState JSON file.",
+    ),
+    edge_state_output: Path | None = typer.Option(
+        None,
+        "--edge-state-output",
+        help="Write the canonical cone-edge FlowState JSON file.",
+    ),
+) -> None:
+    """Run a Taylor-Maccoll calculation."""
+
+    # select direct-option mode when any primary solver input is provided
+    direct_inputs = (mach, cone_angle, shock_angle)
+    use_direct_options = any(value is not None for value in direct_inputs)
+
+    try:
+        if use_direct_options:
+            if config is not None:
+                raise ValueError("--config cannot be combined with direct solver inputs")
+
+            calculation = TaylorMaccollConfig(
+                mach=mach,
+                cone_angle=cone_angle,
+                shock_angle=shock_angle,
+                gamma=gamma,
+                beta_guess=beta_guess,
+                output=output,
+                output_format="json" if json else "text",
+                upstream_state=upstream_state,
+                edge_state_output=edge_state_output,
+            )
+        else:
+            config_data = read_config(config)
+            if "taylor_maccoll" not in config_data:
+                config_path = DEFAULT_CONFIG_PATH if config is None else config
+                raise ValueError(f"config does not contain [taylor_maccoll]: {config_path}")
+            calculation = parse_taylor_maccoll_config(config_data["taylor_maccoll"])
+
+        formatted = run_taylor_maccoll(calculation)
+    except (ImportError, OSError, TypeError, ValueError) as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(1) from None
+
+    # write configured output or print to the terminal
+    if calculation.output is None:
+        typer.echo(formatted)
+    else:
+        calculation.output.write_text(formatted + "\n", encoding="utf-8")
+        typer.echo(f"Written: {calculation.output}")
+
+    # report the optional edge-state artifact separately
+    if calculation.edge_state_output is not None:
+        typer.echo(f"Written: {calculation.edge_state_output}")

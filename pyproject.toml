@@ -31,7 +31,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+flow-state = [
+    "flowstate",
+]
 dev = [
+    "flowstate",
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "ruff>=0.1.0",

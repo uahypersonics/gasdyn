@@ -21,6 +21,34 @@ pip install gasdyn
 import gasdyn
 ```
 
+Run a calculator directly through its solver group:
+
+```bash
+gasdyn isentropic run --mach 2.0
+gasdyn taylor-maccoll run --mach 3.0 --cone-angle 10.0
+```
+
+Optionally create a complete dimensional cone-edge state from an upstream
+FlowState while preserving the normal Taylor-Maccoll result:
+
+```bash
+pip install "gasdyn[flow-state]"
+gasdyn taylor-maccoll run \
+   --mach 3.0 \
+   --cone-angle 10.0 \
+   --output taylor_maccoll.json \
+   --json \
+   --upstream-state flow_state.json \
+   --edge-state-output edge_state.json
+```
+
+Generate and run a config for one solver:
+
+```bash
+gasdyn taylor-maccoll init
+gasdyn taylor-maccoll run
+```
+
 ## Features
 
 - **Isentropic relations**: pressure, temperature, density ratios
