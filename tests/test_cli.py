@@ -189,59 +189,67 @@ def test_cli_cone_no_args_shows_help():
     assert "run" in output
 
 
-def test_cli_cone_init_and_run_config() -> None:
+def test_cli_cone_init_and_run_config(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Taylor-Maccoll init writes a focused config consumed by run."""
-    with runner.isolated_filesystem():
-        init_result = runner.invoke(app, ["taylor-maccoll", "init"])
-        run_result = runner.invoke(app, ["taylor-maccoll", "run"])
+    monkeypatch.chdir(tmp_path)
 
-        assert init_result.exit_code == 0
-        assert Path("gasdyn.toml").is_file()
-        assert run_result.exit_code == 0
-        assert Path("taylor_maccoll.json").is_file()
+    init_result = runner.invoke(app, ["taylor-maccoll", "init"])
+    run_result = runner.invoke(app, ["taylor-maccoll", "run"])
+
+    assert init_result.exit_code == 0
+    assert Path("gasdyn.toml").is_file()
+    assert run_result.exit_code == 0
+    assert Path("taylor_maccoll.json").is_file()
 
 
-def test_cli_cone_writes_optional_edge_flow_state() -> None:
+def test_cli_cone_writes_optional_edge_flow_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Taylor-Maccoll preserves its result and writes a canonical edge state."""
     flow_state = pytest.importorskip("flow_state")
     from flow_state.io import read_json, write_json
 
-    with runner.isolated_filesystem():
-        upstream_state = flow_state.solve(
-            mach=3.0,
-            pres=2500.0,
-            temp=220.0,
-        )
-        write_json(upstream_state, "flow_state.json")
+    monkeypatch.chdir(tmp_path)
 
-        result = runner.invoke(
-            app,
-            [
-                "taylor-maccoll",
-                "run",
-                "--mach",
-                "3.0",
-                "--cone-angle",
-                "10.0",
-                "--json",
-                "--output",
-                "taylor_maccoll.json",
-                "--upstream-state",
-                "flow_state.json",
-                "--edge-state-output",
-                "edge_state.json",
-            ],
-        )
+    upstream_state = flow_state.solve(
+        mach=3.0,
+        pres=2500.0,
+        temp=220.0,
+    )
+    write_json(upstream_state, "flow_state.json")
 
-        edge_state = read_json("edge_state.json")
+    result = runner.invoke(
+        app,
+        [
+            "taylor-maccoll",
+            "run",
+            "--mach",
+            "3.0",
+            "--cone-angle",
+            "10.0",
+            "--json",
+            "--output",
+            "taylor_maccoll.json",
+            "--upstream-state",
+            "flow_state.json",
+            "--edge-state-output",
+            "edge_state.json",
+        ],
+    )
 
-        assert result.exit_code == 0
-        assert Path("taylor_maccoll.json").is_file()
-        assert edge_state.mach == pytest.approx(2.7101238158301735)
-        assert edge_state.pres > upstream_state.pres
-        assert edge_state.temp > upstream_state.temp
-        assert edge_state.transport_model == upstream_state.transport_model
-        assert edge_state.provenance["builder"] == "gasdyn.taylor_maccoll"
+    edge_state = read_json("edge_state.json")
+
+    assert result.exit_code == 0
+    assert Path("taylor_maccoll.json").is_file()
+    assert edge_state.mach == pytest.approx(2.7101238158301735)
+    assert edge_state.pres > upstream_state.pres
+    assert edge_state.temp > upstream_state.temp
+    assert edge_state.transport_model == upstream_state.transport_model
+    assert edge_state.provenance["builder"] == "gasdyn.taylor_maccoll"
 
 
 def test_cli_cone_requires_both_edge_state_paths() -> None:
@@ -264,7 +272,10 @@ def test_cli_cone_requires_both_edge_state_paths() -> None:
     assert "must be provided together" in result.output
 
 
-def test_cli_cone_config_writes_optional_edge_flow_state() -> None:
+def test_cli_cone_config_writes_optional_edge_flow_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Configured Taylor-Maccoll runs can emit the secondary edge state."""
     flow_state = pytest.importorskip("flow_state")
     from flow_state.io import read_json, write_json
@@ -279,21 +290,22 @@ upstream_state = "flow_state.json"
 edge_state_output = "edge_state.json"
 """
 
-    with runner.isolated_filesystem():
-        upstream_state = flow_state.solve(
-            mach=3.0,
-            pres=2500.0,
-            temp=220.0,
-        )
-        write_json(upstream_state, "flow_state.json")
-        Path("gasdyn.toml").write_text(config_text, encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
 
-        result = runner.invoke(app, ["taylor-maccoll", "run"])
-        edge_state = read_json("edge_state.json")
+    upstream_state = flow_state.solve(
+        mach=3.0,
+        pres=2500.0,
+        temp=220.0,
+    )
+    write_json(upstream_state, "flow_state.json")
+    Path("gasdyn.toml").write_text(config_text, encoding="utf-8")
 
-        assert result.exit_code == 0
-        assert Path("taylor_maccoll.json").is_file()
-        assert edge_state.mach == pytest.approx(2.7101238158301735)
+    result = runner.invoke(app, ["taylor-maccoll", "run"])
+    edge_state = read_json("edge_state.json")
+
+    assert result.exit_code == 0
+    assert Path("taylor_maccoll.json").is_file()
+    assert edge_state.mach == pytest.approx(2.7101238158301735)
 
 
 def test_cli_json_output():
