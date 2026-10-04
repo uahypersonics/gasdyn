@@ -49,6 +49,16 @@ gasdyn taylor-maccoll init
 gasdyn taylor-maccoll run
 ```
 
+**Optional: enable Zsh tab completion**
+
+Install gasdyn's completion script once, then open a new shell:
+
+```zsh
+gasdyn --install-completion zsh
+```
+
+You can then complete solver groups, commands, and options with Tab.
+
 ## Features
 
 - **Isentropic relations**: pressure, temperature, density ratios

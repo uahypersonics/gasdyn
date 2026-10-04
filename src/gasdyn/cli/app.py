@@ -23,7 +23,7 @@ cli = typer.Typer(
     name="gasdyn",
     help="Gas dynamics calculator",
     no_args_is_help=True,
-    add_completion=False,
+    add_completion=True,
 )
 
 

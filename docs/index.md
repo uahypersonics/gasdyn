@@ -15,7 +15,7 @@ pip install gasdyn
 === "CLI"
 
 	```bash
-	gasdyn oblique --mach 6.0 --deflection-angle 8.0
+	gasdyn oblique run --mach 6.0 --deflection-angle 8.0
 	```
 
 === "API"
@@ -26,6 +26,16 @@ pip install gasdyn
 	result = solve_oblique(mach=6.0, deflection_angle=8.0)
 	print(result.shock_angle)
 	```
+
+!!! tip "Optional: enable Zsh tab completion"
+
+	Install gasdyn's completion script once, then open a new shell:
+
+	```zsh
+	gasdyn --install-completion zsh
+	```
+
+	You can then complete solver groups, commands, and options with ++tab++.
 
 ## Feedback & Contributing
 

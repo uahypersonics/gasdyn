@@ -18,6 +18,15 @@ def test_cli_help():
     assert "Gas dynamics" in result.stdout
 
 
+def test_cli_help_lists_completion_options() -> None:
+    """Test that shell-completion installation remains available."""
+    result = runner.invoke(app, ["--help"])
+
+    assert result.exit_code == 0
+    assert "--install-completion" in result.stdout
+    assert "--show-completion" in result.stdout
+
+
 def test_cli_no_args_shows_help():
     """Test that CLI shows help when invoked with no arguments."""
     # The main() function adds --help when no args, but we test the app directly
