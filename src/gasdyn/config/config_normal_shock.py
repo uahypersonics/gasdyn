@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from gasdyn.config._converters import _optional_float, _optional_path
+
 
 @dataclass(frozen=True, slots=True)
 class NormalShockConfig:
@@ -20,9 +22,7 @@ class NormalShockConfig:
     def __post_init__(self) -> None:
         """Validate the configured normal-shock calculation."""
         if sum(value is not None for value in (self.mach_1, self.pres_ratio)) != 1:
-            raise ValueError(
-                "[normal_shock] must provide exactly one of: mach_1, pres_ratio"
-            )
+            raise ValueError("[normal_shock] must provide exactly one of: mach_1, pres_ratio")
         if self.gamma <= 1.0:
             raise ValueError("[normal_shock].gamma must be greater than 1")
         if self.output_format not in {"text", "json"}:
@@ -47,15 +47,3 @@ def parse_normal_shock_config(section: dict[str, Any]) -> NormalShockConfig:
         output_format=str(section.get("format", "text")).strip().lower(),
     )
     return config
-
-
-def _optional_float(value: Any) -> float | None:
-    """Convert an optional TOML value to float."""
-    result = None if value is None else float(value)
-    return result
-
-
-def _optional_path(value: Any) -> Path | None:
-    """Convert an optional TOML value to Path."""
-    result = None if value is None else Path(str(value))
-    return result

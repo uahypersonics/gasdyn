@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from gasdyn.config._converters import _optional_float, _optional_path
+
 
 # --------------------------------------------------
 # Taylor-Maccoll config
@@ -22,9 +24,9 @@ class TaylorMaccollConfig:
     shock_angle: float | None = None
     gamma: float = 1.4
     beta_guess: float | None = None
-    output: Path | None = None
-    output_format: str = "text"
-    upstream_state: Path | None = None
+    solution_output: Path | None = None
+    pre_shock_state_input: Path | None = None
+    post_shock_state_output: Path | None = None
     edge_state_output: Path | None = None
 
     def __post_init__(self) -> None:
@@ -38,17 +40,30 @@ class TaylorMaccollConfig:
                 "[taylor_maccoll] must provide exactly two of: mach, cone_angle, shock_angle"
             )
 
-        # validate common gas and output settings
+        # validate the gas model input
         if self.gamma <= 1.0:
             raise ValueError("[taylor_maccoll].gamma must be greater than 1")
-        if self.output_format not in {"text", "json"}:
-            raise ValueError("[taylor_maccoll].format must be 'text' or 'json'")
 
-        # require both paths so edge-state generation is explicit and complete
-        edge_paths = (self.upstream_state, self.edge_state_output)
-        if sum(path is not None for path in edge_paths) == 1:
+        # require JSON for every configured state or solution file
+        json_paths = {
+            "solution_output": self.solution_output,
+            "pre_shock_state_input": self.pre_shock_state_input,
+            "post_shock_state_output": self.post_shock_state_output,
+            "edge_state_output": self.edge_state_output,
+        }
+        for field_name, path in json_paths.items():
+            if path is not None and path.suffix.lower() != ".json":
+                raise ValueError(f"[taylor_maccoll].{field_name} must use a .json file")
+
+        # require the dimensional input and at least one dimensional output together
+        has_state_input = self.pre_shock_state_input is not None
+        has_state_output = (
+            self.post_shock_state_output is not None or self.edge_state_output is not None
+        )
+        if has_state_input != has_state_output:
             raise ValueError(
-                "[taylor_maccoll].upstream_state and edge_state_output must be provided together"
+                "[taylor_maccoll].pre_shock_state_input and at least one of "
+                "post_shock_state_output or edge_state_output must be provided together"
             )
 
 
@@ -73,18 +88,23 @@ def parse_taylor_maccoll_config(section: dict[str, Any]) -> TaylorMaccollConfig:
     if not isinstance(section, dict):
         raise TypeError("[taylor_maccoll] must be a TOML table")
 
+    # define allowed/recognized keys for the [taylor_maccoll] section
     allowed_keys = {
         "mach",
         "cone_angle",
         "shock_angle",
         "gamma",
         "beta_guess",
-        "output",
-        "format",
-        "upstream_state",
+        "solution_output",
+        "pre_shock_state_input",
+        "post_shock_state_output",
         "edge_state_output",
     }
+
+    # collect all unrecognized keys
     unknown_keys = sorted(set(section) - allowed_keys)
+
+    # if unknown keys are found, raise an error
     if unknown_keys:
         unknown = ", ".join(unknown_keys)
         raise ValueError(f"unknown [taylor_maccoll] fields: {unknown}")
@@ -96,25 +116,10 @@ def parse_taylor_maccoll_config(section: dict[str, Any]) -> TaylorMaccollConfig:
         shock_angle=_optional_float(section.get("shock_angle")),
         gamma=float(section.get("gamma", 1.4)),
         beta_guess=_optional_float(section.get("beta_guess")),
-        output=_optional_path(section.get("output")),
-        output_format=str(section.get("format", "text")).strip().lower(),
-        upstream_state=_optional_path(section.get("upstream_state")),
+        solution_output=_optional_path(section.get("solution_output")),
+        pre_shock_state_input=_optional_path(section.get("pre_shock_state_input")),
+        post_shock_state_output=_optional_path(section.get("post_shock_state_output")),
         edge_state_output=_optional_path(section.get("edge_state_output")),
     )
 
     return config
-
-
-# --------------------------------------------------
-# value conversion helpers
-# --------------------------------------------------
-def _optional_float(value: Any) -> float | None:
-    """Convert an optional TOML value to float."""
-    result = None if value is None else float(value)
-    return result
-
-
-def _optional_path(value: Any) -> Path | None:
-    """Convert an optional TOML value to Path."""
-    result = None if value is None else Path(str(value))
-    return result

@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from gasdyn.config._converters import _optional_float, _optional_path
+
 
 @dataclass(frozen=True, slots=True)
 class IsentropicConfig:
@@ -75,15 +77,3 @@ def parse_isentropic_config(section: dict[str, Any]) -> IsentropicConfig:
         output_format=str(section.get("format", "text")).strip().lower(),
     )
     return config
-
-
-def _optional_float(value: Any) -> float | None:
-    """Convert an optional TOML value to float."""
-    result = None if value is None else float(value)
-    return result
-
-
-def _optional_path(value: Any) -> Path | None:
-    """Convert an optional TOML value to Path."""
-    result = None if value is None else Path(str(value))
-    return result

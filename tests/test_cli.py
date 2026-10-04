@@ -198,6 +198,44 @@ def test_cli_cone_no_args_shows_help():
     assert "run" in output
 
 
+def test_cli_cone_run_uses_artifact_specific_options() -> None:
+    """Taylor-Maccoll run exposes the dimensional state artifact options."""
+    result = runner.invoke(app, ["taylor-maccoll", "run", "--help"])
+    output = strip_ansi(result.stdout)
+
+    assert result.exit_code == 0
+    assert "--solution-output" in output
+    assert "--pre-shock-state-input" in output
+    assert "--post-shock-state-output" in output
+    assert "--edge-state-output" in output
+    assert "--json" not in output
+    assert "--output" not in output
+    assert "--freestream-state" not in output
+    assert "--upstream-state" not in output
+
+
+@pytest.mark.parametrize(
+    "legacy_option",
+    ["--json", "--output", "--freestream-state", "--upstream-state"],
+)
+def test_cli_cone_rejects_legacy_options(legacy_option: str) -> None:
+    """Taylor-Maccoll run does not retain compatibility CLI options."""
+    arguments = [
+        "taylor-maccoll",
+        "run",
+        "--mach",
+        "3.0",
+        "--cone-angle",
+        "10.0",
+        legacy_option,
+        "legacy.json",
+    ]
+
+    result = runner.invoke(app, arguments)
+
+    assert result.exit_code != 0
+
+
 def test_cli_cone_init_and_run_config(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -214,22 +252,22 @@ def test_cli_cone_init_and_run_config(
     assert Path("taylor_maccoll.json").is_file()
 
 
-def test_cli_cone_writes_optional_edge_flow_state(
+def test_cli_cone_writes_optional_dimensional_flow_states(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Taylor-Maccoll preserves its result and writes a canonical edge state."""
+    """Taylor-Maccoll writes canonical post-shock and cone-edge states."""
     flow_state = pytest.importorskip("flow_state")
     from flow_state.io import read_json, write_json
 
     monkeypatch.chdir(tmp_path)
 
-    upstream_state = flow_state.solve(
+    pre_shock_state = flow_state.solve(
         mach=3.0,
         pres=2500.0,
         temp=220.0,
     )
-    write_json(upstream_state, "flow_state.json")
+    write_json(pre_shock_state, "pre_shock_state.json")
 
     result = runner.invoke(
         app,
@@ -240,29 +278,41 @@ def test_cli_cone_writes_optional_edge_flow_state(
             "3.0",
             "--cone-angle",
             "10.0",
-            "--json",
-            "--output",
+            "--solution-output",
             "taylor_maccoll.json",
-            "--upstream-state",
-            "flow_state.json",
+            "--pre-shock-state-input",
+            "pre_shock_state.json",
+            "--post-shock-state-output",
+            "post_shock_state.json",
             "--edge-state-output",
             "edge_state.json",
         ],
     )
 
+    post_shock_state = read_json("post_shock_state.json")
     edge_state = read_json("edge_state.json")
 
     assert result.exit_code == 0
     assert Path("taylor_maccoll.json").is_file()
+    assert post_shock_state.pres > pre_shock_state.pres
+    assert post_shock_state.temp > pre_shock_state.temp
     assert edge_state.mach == pytest.approx(2.7101238158301735)
-    assert edge_state.pres > upstream_state.pres
-    assert edge_state.temp > upstream_state.temp
-    assert edge_state.transport_model == upstream_state.transport_model
+    assert edge_state.pres > post_shock_state.pres
+    assert edge_state.temp > post_shock_state.temp
+    assert edge_state.transport_model == pre_shock_state.transport_model
+    assert post_shock_state.provenance["state_location"] == "post_shock"
+    assert edge_state.provenance["state_location"] == "edge"
     assert edge_state.provenance["builder"] == "gasdyn.taylor_maccoll"
 
 
-def test_cli_cone_requires_both_edge_state_paths() -> None:
-    """Edge-state output requires a complete upstream FlowState path."""
+@pytest.mark.parametrize(
+    "state_output_option",
+    ["--post-shock-state-output", "--edge-state-output"],
+)
+def test_cli_cone_state_output_requires_pre_shock_input(
+    state_output_option: str,
+) -> None:
+    """Each dimensional state output requires a pre-shock FlowState input."""
     result = runner.invoke(
         app,
         [
@@ -272,8 +322,8 @@ def test_cli_cone_requires_both_edge_state_paths() -> None:
             "3.0",
             "--cone-angle",
             "10.0",
-            "--edge-state-output",
-            "edge_state.json",
+            state_output_option,
+            "state.json",
         ],
     )
 
@@ -281,11 +331,76 @@ def test_cli_cone_requires_both_edge_state_paths() -> None:
     assert "must be provided together" in result.output
 
 
-def test_cli_cone_config_writes_optional_edge_flow_state(
+def test_cli_cone_pre_shock_input_requires_state_output() -> None:
+    """A pre-shock FlowState input must be consumed by a state output."""
+    result = runner.invoke(
+        app,
+        [
+            "taylor-maccoll",
+            "run",
+            "--mach",
+            "3.0",
+            "--cone-angle",
+            "10.0",
+            "--pre-shock-state-input",
+            "pre_shock_state.json",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "must be provided together" in result.output
+
+
+@pytest.mark.parametrize(
+    ("path_option", "invalid_path", "companion_options"),
+    [
+        ("--solution-output", "solution.txt", []),
+        (
+            "--pre-shock-state-input",
+            "pre_shock_state.toml",
+            ["--edge-state-output", "edge_state.json"],
+        ),
+        (
+            "--post-shock-state-output",
+            "post_shock_state.toml",
+            ["--pre-shock-state-input", "pre_shock_state.json"],
+        ),
+        (
+            "--edge-state-output",
+            "edge_state.dat",
+            ["--pre-shock-state-input", "pre_shock_state.json"],
+        ),
+    ],
+)
+def test_cli_cone_rejects_non_json_paths(
+    path_option: str,
+    invalid_path: str,
+    companion_options: list[str],
+) -> None:
+    """Configured Taylor-Maccoll artifacts must use JSON filenames."""
+    arguments = [
+        "taylor-maccoll",
+        "run",
+        "--mach",
+        "3.0",
+        "--cone-angle",
+        "10.0",
+        path_option,
+        invalid_path,
+        *companion_options,
+    ]
+
+    result = runner.invoke(app, arguments)
+
+    assert result.exit_code == 1
+    assert "must use a .json file" in result.output
+
+
+def test_cli_cone_config_writes_optional_dimensional_flow_states(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Configured Taylor-Maccoll runs can emit the secondary edge state."""
+    """Configured Taylor-Maccoll runs can emit both dimensional states."""
     flow_state = pytest.importorskip("flow_state")
     from flow_state.io import read_json, write_json
 
@@ -293,28 +408,56 @@ def test_cli_cone_config_writes_optional_edge_flow_state(
 [taylor_maccoll]
 mach = 3.0
 cone_angle = 10.0
-format = "json"
-output = "taylor_maccoll.json"
-upstream_state = "flow_state.json"
+solution_output = "taylor_maccoll.json"
+pre_shock_state_input = "pre_shock_state.json"
+post_shock_state_output = "post_shock_state.json"
 edge_state_output = "edge_state.json"
 """
 
     monkeypatch.chdir(tmp_path)
 
-    upstream_state = flow_state.solve(
+    pre_shock_state = flow_state.solve(
         mach=3.0,
         pres=2500.0,
         temp=220.0,
     )
-    write_json(upstream_state, "flow_state.json")
+    write_json(pre_shock_state, "pre_shock_state.json")
     Path("gasdyn.toml").write_text(config_text, encoding="utf-8")
 
     result = runner.invoke(app, ["taylor-maccoll", "run"])
+    post_shock_state = read_json("post_shock_state.json")
     edge_state = read_json("edge_state.json")
 
     assert result.exit_code == 0
     assert Path("taylor_maccoll.json").is_file()
+    assert post_shock_state.pres > pre_shock_state.pres
     assert edge_state.mach == pytest.approx(2.7101238158301735)
+
+
+@pytest.mark.parametrize(
+    "legacy_field",
+    ["output", "format", "freestream_state", "upstream_state"],
+)
+def test_cli_cone_rejects_legacy_config_fields(
+    legacy_field: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Taylor-Maccoll config does not retain compatibility aliases."""
+    config_text = f"""\
+[taylor_maccoll]
+mach = 3.0
+cone_angle = 10.0
+{legacy_field} = "legacy.json"
+"""
+
+    monkeypatch.chdir(tmp_path)
+    Path("gasdyn.toml").write_text(config_text, encoding="utf-8")
+
+    result = runner.invoke(app, ["taylor-maccoll", "run"])
+
+    assert result.exit_code == 1
+    assert f"unknown [taylor_maccoll] fields: {legacy_field}" in result.output
 
 
 def test_cli_json_output():

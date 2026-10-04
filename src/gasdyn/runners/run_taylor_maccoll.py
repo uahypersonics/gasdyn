@@ -1,7 +1,7 @@
 """Run a configured Taylor-Maccoll calculation."""
 
 from gasdyn.config import TaylorMaccollConfig
-from gasdyn.integrations import write_taylor_maccoll_edge_state
+from gasdyn.integrations import write_taylor_maccoll_flow_states
 from gasdyn.taylor_maccoll.taylor_maccoll import (
     format_taylor_maccoll_result,
     solve_taylor_maccoll,
@@ -31,18 +31,19 @@ def run_taylor_maccoll(config: TaylorMaccollConfig) -> str:
         beta_guess=config.beta_guess,
     )
 
-    # write the optional complete dimensional edge state
-    if config.upstream_state is not None and config.edge_state_output is not None:
-        write_taylor_maccoll_edge_state(
-            upstream_path=config.upstream_state,
-            output_path=config.edge_state_output,
+    # write the requested complete dimensional flow states
+    if config.pre_shock_state_input is not None:
+        write_taylor_maccoll_flow_states(
+            pre_shock_path=config.pre_shock_state_input,
             result=result,
+            post_shock_output_path=config.post_shock_state_output,
+            edge_output_path=config.edge_state_output,
         )
 
-    # format the result for the configured destination
+    # infer JSON from the configured solution filename; otherwise return terminal text
     formatted = format_taylor_maccoll_result(
         result,
-        as_json=config.output_format == "json",
+        as_json=config.solution_output is not None,
     )
 
     return formatted

@@ -28,17 +28,17 @@ gasdyn isentropic run --mach 2.0
 gasdyn taylor-maccoll run --mach 3.0 --cone-angle 10.0
 ```
 
-Optionally create a complete dimensional cone-edge state from an upstream
-FlowState while preserving the normal Taylor-Maccoll result:
+Optionally create complete dimensional post-shock and cone-edge states from a
+pre-shock FlowState while preserving the dimensionless Taylor-Maccoll solution:
 
 ```bash
 pip install "gasdyn[flow-state]"
 gasdyn taylor-maccoll run \
    --mach 3.0 \
    --cone-angle 10.0 \
-   --output taylor_maccoll.json \
-   --json \
-   --upstream-state flow_state.json \
+   --solution-output taylor_maccoll.json \
+   --pre-shock-state-input pre_shock_state.json \
+   --post-shock-state-output post_shock_state.json \
    --edge-state-output edge_state.json
 ```
 

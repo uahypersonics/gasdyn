@@ -99,17 +99,21 @@ def cmd_run_taylor_maccoll(
         "--beta-guess",
         help="Initial shock-angle guess (degrees)",
     ),
-    json: bool = typer.Option(False, "--json", help="Output as JSON"),
-    output: Path | None = typer.Option(
+    solution_output: Path | None = typer.Option(
         None,
-        "--output",
+        "--solution-output",
         "-o",
-        help="Write the result to a file.",
+        help="Write the dimensionless solution to a JSON file.",
     ),
-    upstream_state: Path | None = typer.Option(
+    pre_shock_state_input: Path | None = typer.Option(
         None,
-        "--upstream-state",
-        help="Canonical upstream FlowState JSON file.",
+        "--pre-shock-state-input",
+        help="Canonical pre-shock FlowState JSON file.",
+    ),
+    post_shock_state_output: Path | None = typer.Option(
+        None,
+        "--post-shock-state-output",
+        help="Write the canonical post-shock FlowState JSON file.",
     ),
     edge_state_output: Path | None = typer.Option(
         None,
@@ -134,9 +138,9 @@ def cmd_run_taylor_maccoll(
                 shock_angle=shock_angle,
                 gamma=gamma,
                 beta_guess=beta_guess,
-                output=output,
-                output_format="json" if json else "text",
-                upstream_state=upstream_state,
+                solution_output=solution_output,
+                pre_shock_state_input=pre_shock_state_input,
+                post_shock_state_output=post_shock_state_output,
                 edge_state_output=edge_state_output,
             )
         else:
@@ -152,12 +156,14 @@ def cmd_run_taylor_maccoll(
         raise typer.Exit(1) from None
 
     # write configured output or print to the terminal
-    if calculation.output is None:
+    if calculation.solution_output is None:
         typer.echo(formatted)
     else:
-        calculation.output.write_text(formatted + "\n", encoding="utf-8")
-        typer.echo(f"Written: {calculation.output}")
+        calculation.solution_output.write_text(formatted + "\n", encoding="utf-8")
+        typer.echo(f"Written: {calculation.solution_output}")
 
-    # report the optional edge-state artifact separately
+    # report the optional dimensional state artifacts separately
+    if calculation.post_shock_state_output is not None:
+        typer.echo(f"Written: {calculation.post_shock_state_output}")
     if calculation.edge_state_output is not None:
         typer.echo(f"Written: {calculation.edge_state_output}")

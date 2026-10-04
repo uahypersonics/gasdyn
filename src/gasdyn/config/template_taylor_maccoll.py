@@ -1,15 +1,38 @@
 """Starter TOML template for Taylor-Maccoll calculations."""
 
 TAYLOR_MACCOLL_SECTION = """\
+# --------------------------------------------------
+# Taylor-Maccoll solver inputs
+# --------------------------------------------------
+
 [taylor_maccoll]
+# provide exactly two of: mach, cone_angle, shock_angle
+
+# freestream mach number
 mach = 6.0
+
+# cone half-angle [deg]
 cone_angle = 7.0
+
+# shock wave angle [deg] (alternative input)
 # shock_angle = 12.0
+
+# ratio of specific heats
 gamma = 1.4
+
+# initial shock-angle guess [deg] (optional)
 # beta_guess = 12.0
-format = "json"
-output = "taylor_maccoll.json"
-# upstream_state = "flow_state.json"
+
+# dimensional pre-shock FlowState JSON input (requires a dimensional state output)
+# pre_shock_state_input = "pre_shock_state.json"
+
+# dimensionless Taylor-Maccoll solution JSON file
+solution_output = "taylor_maccoll.json"
+
+# dimensional state immediately behind the conical shock (optional)
+# post_shock_state_output = "post_shock_state.json"
+
+# dimensional cone-surface boundary-layer edge state (optional)
 # edge_state_output = "edge_state.json"
 """
 
