@@ -21,10 +21,11 @@ def test_cli_help():
 def test_cli_help_lists_completion_options() -> None:
     """Test that shell-completion installation remains available."""
     result = runner.invoke(app, ["--help"])
+    output = strip_ansi(result.stdout)
 
     assert result.exit_code == 0
-    assert "--install-completion" in result.stdout
-    assert "--show-completion" in result.stdout
+    assert "--install-completion" in output
+    assert "--show-completion" in output
 
 
 def test_cli_no_args_shows_help():
