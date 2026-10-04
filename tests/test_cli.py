@@ -275,8 +275,6 @@ def test_cli_cone_writes_optional_dimensional_flow_states(
         [
             "taylor-maccoll",
             "run",
-            "--mach",
-            "3.0",
             "--cone-angle",
             "10.0",
             "--solution-output",
@@ -407,7 +405,6 @@ def test_cli_cone_config_writes_optional_dimensional_flow_states(
 
     config_text = """\
 [taylor_maccoll]
-mach = 3.0
 cone_angle = 10.0
 solution_output = "taylor_maccoll.json"
 pre_shock_state_input = "pre_shock_state.json"
@@ -433,6 +430,54 @@ edge_state_output = "edge_state.json"
     assert Path("taylor_maccoll.json").is_file()
     assert post_shock_state.pres > pre_shock_state.pres
     assert edge_state.mach == pytest.approx(2.7101238158301735)
+
+
+@pytest.mark.parametrize(
+    ("consistency_option", "value", "message"),
+    [
+        ("--mach", "4.0", "Mach does not match"),
+        ("--gamma", "1.3", "gamma does not match"),
+    ],
+)
+def test_cli_cone_rejects_pre_shock_state_conflicts(
+    consistency_option: str,
+    value: str,
+    message: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Explicit Mach and gamma values must agree with the pre-shock state."""
+    flow_state = pytest.importorskip("flow_state")
+    from flow_state.io import write_json
+
+    monkeypatch.chdir(tmp_path)
+
+    pre_shock_state = flow_state.solve(
+        mach=3.0,
+        pres=2500.0,
+        temp=220.0,
+    )
+    write_json(pre_shock_state, "pre_shock_state.json")
+
+    result = runner.invoke(
+        app,
+        [
+            "taylor-maccoll",
+            "run",
+            "--cone-angle",
+            "10.0",
+            "--pre-shock-state-input",
+            "pre_shock_state.json",
+            "--edge-state-output",
+            "edge_state.json",
+            consistency_option,
+            value,
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert message in result.output
+    assert not Path("edge_state.json").exists()
 
 
 @pytest.mark.parametrize(

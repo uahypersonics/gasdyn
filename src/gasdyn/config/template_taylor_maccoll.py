@@ -6,9 +6,10 @@ TAYLOR_MACCOLL_SECTION = """\
 # --------------------------------------------------
 
 [taylor_maccoll]
-# provide exactly two of: mach, cone_angle, shock_angle
+# without a pre-shock state, provide exactly two of: mach, cone_angle, shock_angle
+# with a pre-shock state, provide exactly one of: cone_angle, shock_angle
 
-# freestream mach number
+# freestream mach number (optional consistency check with a pre-shock state)
 mach = 6.0
 
 # cone half-angle [deg]
@@ -17,7 +18,7 @@ cone_angle = 7.0
 # shock wave angle [deg] (alternative input)
 # shock_angle = 12.0
 
-# ratio of specific heats
+# ratio of specific heats (optional consistency check with a pre-shock state)
 gamma = 1.4
 
 # initial shock-angle guess [deg] (optional)

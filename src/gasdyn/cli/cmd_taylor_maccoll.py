@@ -93,7 +93,11 @@ def cmd_run_taylor_maccoll(
         "--shock-angle",
         help="Shock wave angle (degrees)",
     ),
-    gamma: float = typer.Option(1.4, "--gamma", help="Ratio of specific heats"),
+    gamma: float | None = typer.Option(
+        None,
+        "--gamma",
+        help="Ratio of specific heats (default: 1.4 or pre-shock state value)",
+    ),
     beta_guess: float | None = typer.Option(
         None,
         "--beta-guess",

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from gasdyn.relations.oblique_shock import (
     mach_downstream_oblique,
@@ -15,11 +16,51 @@ from gasdyn.relations.oblique_shock import (
 )
 from gasdyn.taylor_maccoll.taylor_maccoll import TaylorMaccollResult
 
+if TYPE_CHECKING:
+    from flow_state import FlowState
+
+
+# --------------------------------------------------
+# Taylor-Maccoll pre-shock state input
+# --------------------------------------------------
+def read_taylor_maccoll_pre_shock_state(path: str | Path) -> FlowState:
+    """Read and validate the canonical pre-shock FlowState.
+
+    Args:
+        path: Canonical pre-shock FlowState JSON file.
+
+    Returns:
+        Complete dimensional pre-shock state.
+
+    Raises:
+        ImportError: If the optional flowstate package is not installed.
+        ValueError: If the state does not contain a Mach number.
+    """
+
+    # load the optional integration only when a dimensional state is requested
+    try:
+        from flow_state.io import read_json
+    except ImportError as exc:
+        raise ImportError(
+            "Taylor-Maccoll dimensional state output requires the optional flowstate "
+            "package; install gasdyn[flow-state]"
+        ) from exc
+
+    # read the complete dimensional pre-shock state
+    pre_shock_state = read_json(path)
+
+    # require the flow quantity used to drive the Taylor-Maccoll solve
+    if pre_shock_state.mach is None:
+        raise ValueError("pre-shock FlowState must contain a Mach number")
+
+    return pre_shock_state
+
 
 # --------------------------------------------------
 # Taylor-Maccoll dimensional state outputs
 # --------------------------------------------------
 def write_taylor_maccoll_flow_states(
+    pre_shock_state: FlowState,
     pre_shock_path: str | Path,
     result: TaylorMaccollResult,
     post_shock_output_path: str | Path | None = None,
@@ -28,6 +69,7 @@ def write_taylor_maccoll_flow_states(
     """Build and write requested canonical Taylor-Maccoll FlowStates.
 
     Args:
+        pre_shock_state: Complete dimensional pre-shock state.
         pre_shock_path: Canonical JSON file containing the pre-shock FlowState.
         result: Completed Taylor-Maccoll calculation.
         post_shock_output_path: Optional destination for the post-shock state.
@@ -42,7 +84,7 @@ def write_taylor_maccoll_flow_states(
     try:
         from flow_state import from_mach_pres_temp
         from flow_state.gas import get_gas
-        from flow_state.io import read_json, write_json
+        from flow_state.io import write_json
         from flow_state.transport import transport_model_from_spec
     except ImportError as exc:
         raise ImportError(
@@ -50,9 +92,8 @@ def write_taylor_maccoll_flow_states(
             "package; install gasdyn[flow-state]"
         ) from exc
 
-    # read the complete dimensional pre-shock state
+    # convert to Path object for provenance
     pre_shock_path = Path(pre_shock_path)
-    pre_shock_state = read_json(pre_shock_path)
 
     # validate that both packages are operating on the same pre-shock case
     if pre_shock_state.mach is None:

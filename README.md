@@ -34,7 +34,6 @@ pre-shock FlowState while preserving the dimensionless Taylor-Maccoll solution:
 ```bash
 pip install "gasdyn[flow-state]"
 gasdyn taylor-maccoll run \
-   --mach 3.0 \
    --cone-angle 10.0 \
    --solution-output taylor_maccoll.json \
    --pre-shock-state-input pre_shock_state.json \

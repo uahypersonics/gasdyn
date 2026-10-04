@@ -22,7 +22,7 @@ class TaylorMaccollConfig:
     mach: float | None = None
     cone_angle: float | None = None
     shock_angle: float | None = None
-    gamma: float = 1.4
+    gamma: float | None = None
     beta_guess: float | None = None
     solution_output: Path | None = None
     pre_shock_state_input: Path | None = None
@@ -33,15 +33,24 @@ class TaylorMaccollConfig:
         """Validate the configured Taylor-Maccoll calculation."""
 
         # validate the solver input combination
-        primary_inputs = (self.mach, self.cone_angle, self.shock_angle)
-        provided = sum(value is not None for value in primary_inputs)
-        if provided != 2:
-            raise ValueError(
-                "[taylor_maccoll] must provide exactly two of: mach, cone_angle, shock_angle"
-            )
+        if self.pre_shock_state_input is None:
+            primary_inputs = (self.mach, self.cone_angle, self.shock_angle)
+            provided = sum(value is not None for value in primary_inputs)
+            if provided != 2:
+                raise ValueError(
+                    "[taylor_maccoll] must provide exactly two of: mach, cone_angle, shock_angle"
+                )
+        else:
+            geometric_inputs = (self.cone_angle, self.shock_angle)
+            provided = sum(value is not None for value in geometric_inputs)
+            if provided != 1:
+                raise ValueError(
+                    "[taylor_maccoll] with pre_shock_state_input must provide "
+                    "exactly one of: cone_angle, shock_angle"
+                )
 
         # validate the gas model input
-        if self.gamma <= 1.0:
+        if self.gamma is not None and self.gamma <= 1.0:
             raise ValueError("[taylor_maccoll].gamma must be greater than 1")
 
         # require JSON for every configured state or solution file
@@ -114,7 +123,7 @@ def parse_taylor_maccoll_config(section: dict[str, Any]) -> TaylorMaccollConfig:
         mach=_optional_float(section.get("mach")),
         cone_angle=_optional_float(section.get("cone_angle")),
         shock_angle=_optional_float(section.get("shock_angle")),
-        gamma=float(section.get("gamma", 1.4)),
+        gamma=_optional_float(section.get("gamma")),
         beta_guess=_optional_float(section.get("beta_guess")),
         solution_output=_optional_path(section.get("solution_output")),
         pre_shock_state_input=_optional_path(section.get("pre_shock_state_input")),
